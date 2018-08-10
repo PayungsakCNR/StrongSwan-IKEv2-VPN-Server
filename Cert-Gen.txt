@@ -1,0 +1,30 @@
+ipsec pki --gen --type rsa --size 4096 --outform pem > server-root-key.pem
+
+chmod 600 server-root-key.pem
+
+ipsec pki --self --ca --lifetime 3650 \
+--in server-root-key.pem \
+--type rsa --dn "C=US, O=VPN Server, CN=VPN Server Root CA" \
+--outform pem > server-root-ca.pem
+
+
+ipsec pki --gen --type rsa --size 4096 --outform pem > server-key.pem
+
+
+ipsec pki --pub --in server-key.pem \
+--type rsa | ipsec pki --issue --lifetime 1825 \
+--cacert server-root-ca.pem \
+--cakey server-root-key.pem \
+--dn "C=US, O=VPN Server, CN=server_name_or_ip" \
+--san server_name_or_ip \
+--flag serverAuth --flag ikeIntermediate \
+--outform pem > server-cert.pem
+
+
+sudo cp ./vpn-server-cert.pem /etc/server-cert.pem
+sudo cp ./vpn-server-key.pem /etc/server-key.pem
+
+
+sudo chown root /etc/server-key.pem
+sudo chgrp root /etc/server-key.pem
+sudo chmod 600 /etc/server-key.pem
